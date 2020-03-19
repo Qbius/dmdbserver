@@ -19,7 +19,9 @@ start(_StartType, _StartArgs) ->
 	    [{port, 8080}],
 	    #{env => #{dispatch => Dispatch}}
 	),
-    dmdbserver_sup:start_link().
+    Res = dmdbserver_sup:start_link(),
+    io:format("~p", [Res]),
+    Res.
 
 stop(_State) ->
     ok.
