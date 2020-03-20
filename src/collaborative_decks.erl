@@ -27,7 +27,7 @@ drop(Deckname) ->
 
 handle_call({host, Deckname, Deckcode}, {From, _}, State) ->
     {reply, ok, State#{Deckname => {[From], Deckcode}}};
-handle_call({join, Deckname}, From, State) ->
+handle_call({join, Deckname}, {From, _}, State) ->
     case State of
         #{Deckname := {Connected, Deckcode}} ->
             {reply, Deckcode, State#{Deckname => {[From | Connected], Deckcode}}};
