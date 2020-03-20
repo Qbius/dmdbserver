@@ -1,0 +1,1 @@
+web: ./_build/default/rel/dmdb_server/bin/dmdb_server start
