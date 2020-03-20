@@ -60,7 +60,7 @@ terminate(_, _, State) ->
 	collaborative_decks:drop(State).
 
 websocket_info({move, Updatestr}, State) ->
-	{reply, {text, jsx:encode(Updatestr)}, State};
+	{reply, {text, jsx:encode(#{<<"move">> => Updatestr})}, State};
 websocket_info(Info, State) ->
 	io:format("~nUnrecognized message received at websocket: ~p", [Info]),
 	{ok, State}.
