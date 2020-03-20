@@ -25,7 +25,7 @@ sync(Deckname, UpdatedDeckcode) ->
 drop(Deckname) ->
     gen_server:call(?MODULE, {drop, Deckname}).
 
-handle_call({host, Deckname, Deckcode}, From, State) ->
+handle_call({host, Deckname, Deckcode}, {From, _}, State) ->
     {reply, ok, State#{Deckname => {[From], Deckcode}}};
 handle_call({join, Deckname}, From, State) ->
     case State of
@@ -34,7 +34,7 @@ handle_call({join, Deckname}, From, State) ->
         _ ->
             {reply, notfound, State}
     end;
-handle_call({move, Deckname, Updatestr}, From, State) ->
+handle_call({move, Deckname, Updatestr}, {From, _}, State) ->
     case State of
         #{Deckname := {Connected, _Deckcode}} ->
             lists:foreach(fun(PID) ->
@@ -52,7 +52,7 @@ handle_call({sync, Deckname, SyncedDeckcode}, _From, State) ->
         _ ->
             {reply, notfound, State}
     end;
-handle_call({drop, Deckname}, From, State) ->
+handle_call({drop, Deckname}, {From, _}, State) ->
     case State of
         #{Deckname := {Connected, Deckcode}} ->
             {reply, ok, State#{Deckname => {Connected -- [From], Deckcode}}};
