@@ -665,11 +665,11 @@ var app = new Vue({
             left: '0px',
             img: ""
         },
-        shieldtrigger_icon: (window.location.href.includes('beta') ? '../' : './') + '/icons/shieldtrigger.png',
-        blocker_icon: (window.location.href.includes('beta') ? '../' : './') + '/icons/blocker.png',
-        evolutioncreature_icon: (window.location.href.includes('beta') ? '../' : './') + '/icons/evolutioncreature.png',
-        wavestriker_icon: (window.location.href.includes('beta') ? '../' : './') + '/icons/wavestriker.png',
-        survivor_icon: (window.location.href.includes('beta') ? '../' : './') + '/icons/survivor.png',
+        shieldtrigger_icon: '/icons/shieldtrigger.png',
+        blocker_icon: '/icons/blocker.png',
+        evolutioncreature_icon: '/icons/evolutioncreature.png',
+        wavestriker_icon: '/icons/wavestriker.png',
+        survivor_icon: '/icons/survivor.png',
 
         // counters
         is: {
@@ -900,7 +900,7 @@ var app = new Vue({
             return Object.entries(this.deck_cards_to_count).reduce((sum, [name, count]) => sum + (is_evo_bait(tcg[name]) ? count : 0), 0);
         },
         card_image(card) {
-            return (window.location.href.includes('beta') ? '../' : './') + 'dm_images/' + card + '.jpg';
+            return '/dm_images/' + card + '.jpg';
         },
         deck_moved(e) {
             if (e.oldIndex === this.storage.deck_index)
