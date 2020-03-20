@@ -8,6 +8,7 @@
 -record(ws_state, {wut}).
 
 init(Req, _State) ->
+	io:fwrite("init"),
 	{cowboy_websocket, Req, #ws_state{wut = ""}}.
 
 websocket_init(State) ->
@@ -17,7 +18,7 @@ websocket_init(State) ->
 websocket_handle({text, Msg}, State) ->
 	case jsx:decode(Msg, [return_maps]) of
 	    #{<<"jazda">> := Wut} ->
-		    {reply, {text, jsx:encode(#{<<"ale">> => Wut})}, State#ws_state{wut = Wut}};
+	        {reply, {text, jsx:encode(#{<<"ale">> => Wut})}, State#ws_state{wut = Wut}};
 	    _ ->
 	        {reply, {text, <<"hm">>}, State}
     end;
