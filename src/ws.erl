@@ -47,7 +47,7 @@ websocket_handle({text, Msg}, State) ->
 					{reply, {text, "Deck not found!"}, State};
 				ok ->
 			        {ok, State}
-				end;
+			end;
 		_ ->
 	        {reply, {text, <<"hm">>}, State}
     end;
@@ -59,6 +59,8 @@ terminate(_, _, State) ->
 	io:format("~n~p dropped a connection", [State]),
 	collaborative_decks:drop(State).
 
+websocket_info({move, Updatestr}, State) ->
+	{reply, {text, Updatestr}, State};
 websocket_info(Info, State) ->
-		io:format("~n~p received at websocket", [Info]),
-        {ok, State}.
+	io:format("~nUnrecognized message received at websocket: ~p", [Info]),
+	{ok, State}.
