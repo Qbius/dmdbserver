@@ -28,7 +28,7 @@ websocket_handle({text, Msg}, State) ->
 				notfound ->
 					{reply, {text, "Deck not found!"}, Deckname};
 				Deckcode ->
-			        {reply, {text, Deckcode}, Deckname}
+			        {reply, {text, jsx:encode(#{<<"joined">> => Deckcode})}, Deckname}
 			end;
 	    
 		#{<<"move">> := Updatestr} ->
