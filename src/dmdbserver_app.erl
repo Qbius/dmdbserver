@@ -19,9 +19,8 @@ start(_StartType, _StartArgs) ->
 	    [{port, 8080}],
 	    #{env => #{dispatch => Dispatch}}
 	),
-    Res = dmdbserver_sup:start_link(),
-    io:format("~p", [Res]),
-    Res.
+	collaborative_decks:start_link(),
+    dmdbserver_sup:start_link().
 
 stop(_State) ->
     ok.
