@@ -18,7 +18,7 @@ websocket_handle({text, Msg}, State) ->
 		#{<<"host">> := [Deckname, Deckcode]} ->
 			io:format("~nHosting ~p with code ~p", [Deckname, Deckcode]),
 			ok = collaborative_decks:host(Deckname, Deckcode),
-			{noreply, Deckname};
+			{ok, Deckname};
 
 	    #{<<"join">> := Deckname} ->
 			io:format("~nSomeone joined ~p", [Deckname]),
@@ -35,7 +35,7 @@ websocket_handle({text, Msg}, State) ->
 				notfound ->
 					{reply, {text, "Deck not found!"}, State};
 				ok ->
-			        {nopreply, State}
+			        {ok, State}
 			end;
 	    
 		#{<<"sync">> := SyncedDeckcode} ->
@@ -44,7 +44,7 @@ websocket_handle({text, Msg}, State) ->
 				notfound ->
 					{reply, {text, "Deck not found!"}, State};
 				ok ->
-			        {noreply, State}
+			        {ok, State}
 				end;
 		_ ->
 	        {reply, {text, <<"hm">>}, State}
