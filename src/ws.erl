@@ -31,9 +31,9 @@ websocket_handle({text, Msg}, State) ->
 			        {reply, {text, jsx:encode(#{<<"joined">> => Deckcode})}, Deckname}
 			end;
 	    
-		#{<<"move">> := Updatestr} ->
+		#{<<"move">> := [Updatestr, Deckcode]} ->
 			io:format("~nChange to ~p: ~p", [State, Updatestr]),
-			case collaborative_decks:move(State, Updatestr) of
+			case collaborative_decks:move(State, Updatestr, Deckcode) of
 				notfound ->
 					{reply, {text, "Deck not found!"}, State};
 				ok ->
