@@ -12,6 +12,8 @@ init(Req, _State) ->
 websocket_init(State) ->
 	{ok, State}.
 
+websocket_handle({text, <<"sync">>}, State) ->
+	{ok, State};
 websocket_handle({text, Msg}, State) ->
 	case jsx:decode(Msg, [return_maps]) of
 
@@ -26,7 +28,7 @@ websocket_handle({text, Msg}, State) ->
 				notfound ->
 					{reply, {text, "Deck not found!"}, Deckname};
 				Deckcode ->
-			        {reply, {text, Deckcode}, State}
+			        {reply, {text, Deckcode}, Deckname}
 			end;
 	    
 		#{<<"move">> := Updatestr} ->
