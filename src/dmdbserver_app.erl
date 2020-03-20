@@ -12,6 +12,7 @@
 start(_StartType, _StartArgs) ->
     Dispatch = cowboy_router:compile([
 	    {'_', [
+			{"/", cowboy_static, {priv_file, dmdbserver, "index.html"}},
 		    {"/websocket", ws, []}
 	    ]}
 	]),
