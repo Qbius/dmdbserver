@@ -57,5 +57,6 @@ terminate(_, _, State) ->
 	io:format("~n~p dropped a connection", [State]),
 	collaborative_decks:drop(State).
 
-websocket_info(_Info, State) ->
+websocket_info(Info, State) ->
+		io:format("~n~p received at websocket", [Info]),
         {ok, State}.

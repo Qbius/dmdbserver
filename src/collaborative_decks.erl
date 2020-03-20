@@ -38,6 +38,7 @@ handle_call({move, Deckname, Updatestr}, From, State) ->
     case State of
         #{Deckname := {Connected, _Deckcode}} ->
             lists:foreach(fun(PID) ->
+                io:format("~nSending to ~p", [PID]),
                 PID ! {move, Deckname, Updatestr}
             end, Connected -- [From]),
             {reply, ok, State};
