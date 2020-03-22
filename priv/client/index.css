@@ -479,8 +479,76 @@ body, .tab-title, .tab-input {
 .card-image:hover {
     filter: brightness(130%);
 }
+.card-tap {
+    transform: rotate(90deg);
+}
 
+.card-untap {
+    transform: rotate(0deg);
+}
 .decktitle:hover {
     filter: grayscale(100%); 
     filter: brightness(200%);
+}
+
+.zone {
+    display: flex;
+    justify-content: center;
+    border: 3px solid;
+    user-select: none;
+}
+
+.pile {
+    display: flex;
+    justify-content: center;
+    border: 3px solid;
+    user-select: none;
+    position: relative;
+}
+
+.gamecard-container {
+    display: flex;
+    width: 62px;
+    height: 87px;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.pilecard {
+    position: absolute;
+}
+
+.manacard {
+    transform: rotate(180deg);
+}
+
+#battle-zone {
+    border-color: rgb(220, 53, 69);
+    background-color: rgb(220, 53, 69, 0.5);
+}
+
+#shield-zone {
+    border-color: rgb(255, 193, 7);
+    background-color: rgb(255, 193, 7, 0.5);
+}
+
+#mana-zone {
+    justify-content: flex-start;
+    border-color: rgb(40, 167, 69);
+    background-color: rgb(40, 167, 69, 0.5);
+}
+
+#grave-zone {
+    border-color: rgb(52, 58, 64);
+    background-color: rgb(52, 58, 64, 0.5);
+}
+
+#hand-zone {
+    border-color: rgb(0, 123, 255);
+    background-color: rgb(0, 123, 255, 0.5);
+}
+
+#deck-zone {
+    border-color: rgb(255, 255, 255);
+    background-color: rgb(255, 255, 255, 0.5);
 }

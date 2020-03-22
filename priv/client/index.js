@@ -497,6 +497,10 @@ const special = {
     "doge": (tag, key) => key === "holy awe",
 }
 
+Vue.component('stretch', {
+    template: '#stretch'
+});
+
 Vue.component('tags', {
     template: '#tags',
     props: ['modelvar'],
@@ -558,6 +562,189 @@ Vue.component('totalbadge', {
     }
 });
 
+Vue.component('card', {
+    template: '#card',
+    props: ['cardname', 'dndindex', 'divclass'],
+    data() {
+        return{
+            image: (window.location.href.includes('beta') ? '../' : './') + 'dm_images/' + (this.alwaysback ? 'card_back' : this.cardname.name) + '.jpg',
+        }
+    },
+
+    //Tap/untap
+    methods: {
+        change_tap () {
+            let refs = this.$refs.card_element;
+            if(this.$refs.card_element.getAttribute("class") == "card-tap") {
+                refs.setAttribute("class", "card-untap");
+            } else {
+                refs.setAttribute("class", "card-tap");
+            }
+        },
+
+        //Cover/uncover
+        change_cover(){
+            let refs = this.$refs.card_element;
+            if(refs.getAttribute("cover") == "false"){
+                refs.setAttribute("src", (window.location.href.includes('beta') ? '../' : './') + "dm_images/card_back.jpg");
+                refs.setAttribute("cover", "true")
+            } else {
+                refs.src = this.image;
+                refs.setAttribute("cover", "false")
+            }
+        },
+    },
+    computed: {
+        cardstyle() {
+            const width = Math.floor(document.body.scrollHeight * 100 / 138 / 8) - 7;
+            const height = Math.floor(document.body.scrollHeight / 8) - 9;
+            return `width: ${width}px; height: ${height}px;`;
+        }
+    }
+});
+
+Vue.component('zone', {
+    template: '#zone',
+    props: ['zonename', 'model', 'dragged', 'pile'],
+    data() {
+        return {
+            innermodel: JSON.parse(JSON.stringify(this.model)),
+        }
+    },
+    watch: {
+        model(new_model, old_model) {
+            this.innermodel = JSON.parse(JSON.stringify(new_model));
+        }
+    },
+    mounted() {
+        console.log(this.pile);
+        document.addEventListener('mouseup', event => {
+            for (let el of event.path) {
+                if (el.__vue__ !== undefined && el.__vue__.mouse_up !== undefined && el.__vue__.dragged !== undefined) {
+                    el.__vue__.mouse_up(event);
+                }
+            }
+        });
+    },
+    methods: {
+        mouse_down(event) {
+            if (this.dragged === undefined) return;
+
+            let dndindex = event.srcElement.getAttribute('dnd-index');
+            if (dndindex === null) return;
+            dndindex = Math.round(dndindex);
+            for (let el of event.path) {
+                let dndmodel = this[el.getAttribute('dnd-model')];
+                if (dndmodel) {
+
+                    let dragimg = document.getElementById('dragimg');
+                    dragimg.src = event.srcElement.src;
+                    dragimg.style.width = `${Math.floor(document.body.scrollHeight * 100 / 138 / 8) - 7}px`;
+                    dragimg.style.height = `${Math.floor(document.body.scrollHeight / 8) - 9}px`;
+
+                    let{top: elem_top, left: elem_left} = event.srcElement.getBoundingClientRect();
+                                 
+                    this.dragged.update_ghost = (x, y) => {
+                        dragimg.style.left = (x - (event.pageX - elem_left)).toString() + 'px';
+                        dragimg.style.top = (y - (event.pageY - elem_top)).toString() + 'px';
+                        dragimg.style['z-index'] = '10000';
+                    };
+                    this.dragged.reset_ghost = () => {
+                        dragimg.style.left = '0px';
+                        dragimg.style.top = '0px';
+                        dragimg.style['z-index'] = '-1';
+                    };
+                    this.dragged.delete_original = () => {
+                        this.model.splice(dndindex, 1);
+                        this.innermodel.splice(dndindex, 1);
+                    };
+                    this.dragged.restore_original = () => {
+                        this.model.splice(dndindex, 0, JSON.parse(this.dragged.info));
+                        this.innermodel.splice(dndindex, 0, JSON.parse(this.dragged.info));
+                    }
+
+                    this.dragged.exists = true;
+                    this.dragged.draggedelem = event.srcElement;
+                    this.dragged.model = dndmodel;
+                    this.dragged.index = dndindex;
+                    this.dragged.elem = el;
+                    this.dragged.id = dndmodel[dndindex].id;
+                    this.dragged.info = JSON.stringify(dndmodel[dndindex]);
+                    return;
+                }
+            }
+        },
+        mouse_move(event) {
+            if (this.dragged === undefined) return;
+
+            if (Object.keys(this.dragged).length > 0) {
+                if (this.dragged.exists) {
+                    this.dragged.delete_original();
+                    this.dragged.exists = false;
+                }
+                this.dragged.update_ghost(event.pageX, event.pageY);
+            }
+        },
+        mouse_up(event) {
+            if (this.dragged === undefined) return;
+
+            if (Object.keys(this.dragged).length > 0 && !this.dragged.exists) {
+                this.dragged.reset_ghost();
+                for (let el of event.path) {
+                    if (el.getAttribute && el.getAttribute('dnd-model') !== null) {
+                        this.innermodel.push(JSON.parse(this.dragged.info));
+                        this.model.push(JSON.parse(this.dragged.info));
+                        Object.keys(this.dragged).forEach(key => delete this.dragged[key]);
+                        return
+                    }
+                }
+                this.dragged.restore_original();
+            }
+            Object.keys(this.dragged).forEach(key => delete this.dragged[key]);
+        },
+    },
+    computed: {
+        zonestyle() {
+            let res = `height: ${Math.floor(document.body.scrollHeight / 8) - 1}px;`;
+            if (this.pile) res += ` width: ${Math.floor(document.body.scrollHeight * 100 / 138 / 8)}px;`;
+            return res;
+        }
+    }
+});
+
+Vue.component('game', {
+    template: '#game',
+    data() {
+        return {
+
+            dragged: {},
+            battlezone: [
+                { id: 0, name: "aqua hulcus"},
+                { id: 1, name: "crystal lancer"},
+                { id: 2, name: "bolshack dragon" },
+                { id: 3, name: "aqua surfer"},
+                { id: 4, name: "crystal paladin"},
+                { id: 5, name: "bombazar, dragon of destiny"},
+            ],
+            shieldzone: [],
+            manazone: [],
+            gravezone: [],
+            handzone: [],
+            deckzone: [],
+        }
+    },
+    methods: {
+        mouse_left() {
+            if (Object.keys(this.dragged).length > 0) {
+                let{model: srcmodel, index: srcindex} = this.dragged;
+                srcmodel.splice(srcindex, 0, JSON.parse(this.dragged.info));
+                this.dragged.reset_ghost();
+                Object.keys(this.dragged).forEach(key => delete this.dragged[key]);
+            }
+        }
+    }
+})
+
 const codes = {
     zero: '0'.charCodeAt(0),
     A: 'A'.charCodeAt(0),
@@ -609,6 +796,7 @@ var app = new Vue({
         searchtypes: [
             {'text': 'TCG', 'value': 'tcg', 'variant': 'secondary', 'size': 'sm', 'conflict': 'deck'},
             {'text': 'DECK', 'value': 'deck', 'variant': 'secondary', 'size': 'sm', 'conflict': 'tcg'},
+            {'text': 'test', 'value': 'test', 'variant': 'secondary', 'size': 'sm'},
         ],
         civs: [
             {'text': 'Fire', 'value': 'fire', 'variant': 'outline-danger', 'size': 'sm'}, 
@@ -658,6 +846,7 @@ var app = new Vue({
         copied: false,
         copied_msg: "",
         decks_filter: "",
+        divclass: "",
         storage: localStorage.dmdb ? JSON.parse(localStorage.dmdb) : {deck_index: 0, decks: [{name: '', text: ''}]},
         tabedits: {},
         preview: {
@@ -665,11 +854,12 @@ var app = new Vue({
             left: '0px',
             img: ""
         },
-        shieldtrigger_icon: '/icons/shieldtrigger.png',
-        blocker_icon: '/icons/blocker.png',
-        evolutioncreature_icon: '/icons/evolutioncreature.png',
-        wavestriker_icon: '/icons/wavestriker.png',
-        survivor_icon: '/icons/survivor.png',
+        dragged: {},
+        shieldtrigger_icon: (window.location.href.includes('beta') ? '../' : './') + '/icons/shieldtrigger.png',
+        blocker_icon: (window.location.href.includes('beta') ? '../' : './') + '/icons/blocker.png',
+        evolutioncreature_icon: (window.location.href.includes('beta') ? '../' : './') + '/icons/evolutioncreature.png',
+        wavestriker_icon: (window.location.href.includes('beta') ? '../' : './') + '/icons/wavestriker.png',
+        survivor_icon: (window.location.href.includes('beta') ? '../' : './') + '/icons/survivor.png',
 
         // counters
         is: {
@@ -789,87 +979,29 @@ var app = new Vue({
             }
             this.storage.decks.splice(deleted_index, 1);
         },
-        connect_active_deck() {
-            const protocol = location.protocol === 'http:' ? 'ws:' : 'wss:';
-            this.active_deck.connection = new WebSocket(protocol + '//' + location.host + '/websocket');
-            let myself = this.active_deck;
-            this.active_deck.connection.onmessage = ({data: msg}) => {
-                try {
-                    const data = JSON.parse(msg);
-                    if ('move' in data) {
-                        const changed_deck_str = this.change_deck_str(myself.text, data.move);
-                        myself.connection.send(JSON.stringify({sync: this.encode_deck(changed_deck_str)}));
-                        myself.text = changed_deck_str;
-                    }
-                    else if ('joined' in data) {
-                        myself.text = this.decode_deck(data.joined);
-                    }
-                }
-                catch (error) {
-                }
-            };
-        },
-        host_active_deck() {
-            this.connect_active_deck();
-            let myself = this.active_deck;
-            this.active_deck.connection.onopen = () => {
-                myself.connection.send(JSON.stringify({host: [myself.name, this.encode_deck(myself.text)]}));
-                setInterval(() => myself.connection.send("sync"), 30000);
-            };
-        },
-        join_active_deck() {
-            this.connect_active_deck();
-            let myself = this.active_deck;
-            this.active_deck.connection.onopen = () => {
-                myself.connection.send(JSON.stringify({join: myself.name}));
-                setInterval(() => myself.connection.send("sync"), 30000);
-            };
-        },
-        str_add_card(decktext, card) {
-            if (decktext.toLowerCase().includes(card)) {
-                const card_line = decktext.split('\n').find(line => line.toLowerCase().includes(card));
-                const countstr = card_line.trim().substring(0, card_line.trim().search(/[^\d]/));
-                return Math.round(countstr) >= 4 ? decktext : decktext.replace(card_line, card_line.replace(countstr, (Math.round(countstr) + 1).toString()));
-            }
-            else {
-                return (decktext.trim().length === 0) ? ('1x ' + tcg[card].name) : (decktext + '\n1x ' + tcg[card].name);
-            }
-        },
-        str_remove_card(decktext, card) {
-            if (decktext.toLowerCase().includes(card)) {
-                const card_line = decktext.split('\n').find(line => line.toLowerCase().includes(card));
-                const countstr = card_line.trim().substring(0, card_line.trim().search(/[^\d]/));
-                if (Math.round(countstr) > 1) {
-                    return decktext.replace(card_line, card_line.replace(countstr, (Math.round(countstr) - 1).toString()));
-                }
-                else {
-                    return decktext.split('\n').filter(line => line !== card_line).join('\n');
-                }
-            }
-            else {
-                return decktext;
-            }
-        },
-        change_deck_str(decktext, changes_obj) {
-            return Object.entries(changes_obj).reduce((restext, [card, count]) => {
-                const f_change = (count > 0) ? 'str_add_card' : 'str_remove_card';
-                for (let i = 0; i < Math.abs(count); ++i) {
-                    restext = this[f_change](restext, card);
-                }
-                return restext;
-            }, decktext);
-        },
         add_card(card) {
-            const changed_obj = {[card]: 1};
-            const decktext = this.change_deck_str(this.active_deck.text, changed_obj)
-            this.send_change(changed_obj, decktext);
-            this.active_deck.text = decktext;
+            if (this.active_deck.text.toLowerCase().includes(card)) {
+                const card_line = this.active_deck.text.split('\n').find(line => line.toLowerCase().includes(card));
+                const countstr = card_line.trim().substring(0, card_line.trim().search(/[^\d]/));
+                this.active_deck.text = Math.round(countstr) >= 4? this.active_deck.text : this.active_deck.text.replace(card_line, card_line.replace(countstr, (Math.round(countstr) + 1).toString()));
+            }
+            else {
+                this.active_deck.text = (this.active_deck.text.trim().length === 0) ? ('1x ' + tcg[card].name) : (this.active_deck.text + '\n1x ' + tcg[card].name);
+                let decktext = document.getElementById("decktext");
+                decktext.scrollTop = decktext.scrollHeight - decktext.clientHeight;
+            }
         },
         remove_card(card) {
-            const changed_obj = {[card]: -1};
-            const decktext = this.change_deck_str(this.active_deck.text, changed_obj)
-            this.send_change(changed_obj, decktext);
-            this.active_deck.text = decktext;
+            if (this.active_deck.text.toLowerCase().includes(card)) {
+                const card_line = this.active_deck.text.split('\n').find(line => line.toLowerCase().includes(card));
+                const countstr = card_line.trim().substring(0, card_line.trim().search(/[^\d]/));
+                if (Math.round(countstr) > 1) {
+                    this.active_deck.text = this.active_deck.text.replace(card_line, card_line.replace(countstr, (Math.round(countstr) - 1).toString()));
+                }
+                else {
+                    this.active_deck.text = this.active_deck.text.split('\n').filter(line => line !== card_line).join('\n');
+                }
+            }
         },
         is_card(card) {
             return card.toLowerCase() in tcg;
@@ -900,11 +1032,7 @@ var app = new Vue({
             return Object.entries(this.deck_cards_to_count).reduce((sum, [name, count]) => sum + (is_evo_bait(tcg[name]) ? count : 0), 0);
         },
         card_image(card) {
-            return '/dm_images/' + card + '.jpg';
-        },
-        deck_moved(e) {
-            if (e.oldIndex === this.storage.deck_index)
-                this.storage.deck_index = e.newIndex;
+            return (window.location.href.includes('beta') ? '../' : './') + 'dm_images/' + card + '.jpg';
         },
         el_property(id, prop) {
             const el = document.getElementById(id);
@@ -913,7 +1041,7 @@ var app = new Vue({
         init_from_deck(deckstr) {
             const[deckcode, decktitle] = deckstr.split('@')
             if (deckcode) {
-                const res = this.decode_deck(deckcode);
+                const res = deckcode.match(/.{1,2}/g).map(([first, second]) => 62 * base62.from(first) + base62.from(second)).map(n => (Math.floor(n / 890) + 1).toString() + 'x ' + tcg[Object.keys(tcg)[n % 890]].name).join('\n');
                 this.storage.decks.push({name: decktitle ? decktitle : '', text: res});
                 setTimeout(() => {
                     this.storage.deck_index = this.storage.decks.length - 1;
@@ -937,7 +1065,8 @@ var app = new Vue({
             this.show_copied();
         },
         share_deck() {
-            const deckcode = this.encode_deck(this.active_deck.text);
+            const cardsplit = card => [Math.round(card.substring(0, card.search(' ')).substring(0, card.search(/[^\d]/))), card.substring(card.search(' ')).trim()];
+            const deckcode = this.active_deck.text.split('\n').map(line => line.trim()).filter(line => line.length !== 0).map(cardsplit).filter(([count, name]) => count > 0).map(([count, name]) => ((count - 1) * 890) + Object.keys(tcg).indexOf(name.toLowerCase())).map(n => base62.to(Math.floor(n / 62)) + base62.to(n % 62)).join('');
             const url = window.location.href.split('?')[0] + '?shared=' + deckcode + (this.active_deck.name ? '@' + encodeURI(this.active_deck.name) : '');
             let el = document.getElementById('copier');
             el.value = url;
@@ -945,13 +1074,6 @@ var app = new Vue({
             document.execCommand('copy');
             this.copied_msg = "Link copied to clipboard!";
             this.show_copied();
-        },
-        decode_deck(deckcode) {
-            return deckcode.match(/.{1,2}/g).map(([first, second]) => 62 * base62.from(first) + base62.from(second)).map(n => (Math.floor(n / 890) + 1).toString() + 'x ' + tcg[Object.keys(tcg)[n % 890]].name).join('\n');
-        },
-        encode_deck(deckstr) {
-            const cardsplit = card => [Math.round(card.substring(0, card.search(' ')).substring(0, card.search(/[^\d]/))), card.substring(card.search(' ')).trim()];
-            return deckstr.split('\n').map(line => line.trim()).filter(line => line.length !== 0).map(cardsplit).filter(([count, name]) => count > 0).map(([count, name]) => ((count - 1) * 890) + Object.keys(tcg).indexOf(name.toLowerCase())).map(n => base62.to(Math.floor(n / 62)) + base62.to(n % 62)).join('');
         },
         deck_column(column) {
             return this.deck_cards.filter((card, index) => (index % this.cards_per_row) === column);
@@ -988,27 +1110,6 @@ var app = new Vue({
                 return res;
             }
         },
-        calculate_and_send_change(event) {
-            const cardsplit = card => [Math.round(card.substring(0, card.search(' ')).substring(0, card.search(/[^\d]/))), card.substring(card.search(' ')).trim()];
-            const res = event.target.value.split('\n').map(line => line.trim()).filter(line => line.length !== 0).map(cardsplit).reduce((obj, [count, name]) => (name.toLowerCase() in tcg) ? Object.assign(obj, {[name.toLowerCase()]: count}) : obj, {});
-            
-            if (this.active_deck.prev_deck) {
-                const keys2zeroes = [...Object.keys(res), ...Object.keys(this.active_deck.prev_deck)].map(key => [key, 0])
-                const old_deck = Object.assign(Object.fromEntries(keys2zeroes), this.active_deck.prev_deck);
-                const new_deck = Object.assign(Object.fromEntries(keys2zeroes), res);
-
-                const resres = Object.entries(new_deck).reduce((obj, [name, count]) => (count - old_deck[name] !== 0) ? Object.assign(obj, {[name]: count - old_deck[name]}) : obj, {});
-                if (Object.keys(resres).length > 0) {
-                    console.log(resres);
-                    this.send_change(resres, event.target.value);
-                }      
-            }
-        },
-        send_change(change_obj, decktext) {
-            if (this.active_deck.connection) {
-                this.active_deck.connection.send(JSON.stringify({move: [change_obj, this.encode_deck(decktext)]}));
-            }
-        },
     },
     mounted() {
         let decktext = document.getElementById('decktext');
@@ -1039,7 +1140,6 @@ var app = new Vue({
         deck_cards_to_count() {
             const cardsplit = card => [Math.round(card.substring(0, card.search(' ')).substring(0, card.search(/[^\d]/))), card.substring(card.search(' ')).trim()];
             const res = this.active_deck.text.split('\n').map(line => line.trim()).filter(line => line.length !== 0).map(cardsplit).reduce((obj, [count, name]) => (name.toLowerCase() in tcg) ? Object.assign(obj, {[name.toLowerCase()]: count}) : obj, {});
-            this.active_deck.prev_deck = JSON.parse(JSON.stringify(res));
             return res;
         },
         decktext_style() {
@@ -1054,12 +1154,7 @@ var app = new Vue({
         },
         deck_cards() {
             if (localStorage.agree) {
-                let deepcopy = JSON.parse(JSON.stringify(this.storage));
-                deepcopy.decks.forEach(deck => {
-                    delete deck.connection;
-                    delete deck.prev_deck;
-                });
-                localStorage.dmdb = JSON.stringify(deepcopy);
+                localStorage.dmdb = JSON.stringify(this.storage);
             }
             return this.cards.filter(c => this.show[c] && c in this.deck_cards_to_count);
         },
@@ -1068,14 +1163,6 @@ var app = new Vue({
         },
         active_deck() {
             this.decks_filter = "";
-
-            if (!this.storage.decks[this.storage.deck_index].name) {
-                this.storage.decks[this.storage.deck_index].name = '';
-            }
-            if (!this.storage.decks[this.storage.deck_index].text) {
-                this.storage.decks[this.storage.deck_index].text = '';
-            }
-
             return this.storage.decks[this.storage.deck_index];
         },
         show() {

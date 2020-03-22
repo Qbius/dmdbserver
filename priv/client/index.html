@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:v-on="http://www.w3.org/1999/xhtml" xmlns:v-slot="http://www.w3.org/1999/XSL/Transform">
 <head>
     <title>DMDB</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
-    <link rel="stylesheet" href="/client/index.css">
+    <link rel="stylesheet" href="index.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.js"/>
@@ -24,13 +24,62 @@
     TEMPLATES
 -->
 
+    <!-- 
+        CARD 
+    -->
+
+    <script type="text/x-template" id="card">
+        <div :style="cardstyle + ((divclass === 'pilecard') ? `z-index: ${dndindex}` : 'margin-left: 20px; margin-right: 20px;')" :class="'gamecard-container ' + divclass">
+            <img v-if="cardname !== 'empty'" :style="cardstyle" :src="image" :dnd-index="dndindex" ref="card_element" cover="false" @contextmenu.stop.prevent="change_tap()" v-on:dblclick.stop.prevent="change_cover()"></img>
+        </div>
+    </script>
+
+    <!--
+        ZONE
+    -->
+    <script type="text/x-template" id="zone">
+        <div @mousemove.stop.prevent="mouse_move($event)" @mousedown.stop.prevent="mouse_down($event)" :style="zonestyle" :class="pile ? 'pile' : 'zone'" :id="zonename" dnd-model="innermodel">
+            <card v-for="(card, index) in innermodel" :key="card.id" :divclass="pile ? 'pilecard' : ((zonename === 'mana-zone') ? 'manacard' : '')" :dndindex="index" :cardname='card'></card>
+        </div>
+    </script>
+
+    <!--
+        GAME
+    -->
+
+    <script type="text/x-template" id="game">
+        <div style="height: 100%; display: flex; flex-direction: column; align-item: stretch;">
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: flex-start;">
+                <div style="display: flex;">
+                    <zone zonename="deck-zone" :pile="true" :model="deckzone"></zone>
+                    <zone zonename="hand-zone" style="flex: 1;" :model="handzone"></zone>
+                    <zone zonename="graveyard-zone" :pile="true" :model="gravezone"></zone>
+                </div>
+                <zone zonename="mana-zone" :model="manazone"></zone>
+                <zone zonename="shield-zone" :model="shieldzone"></zone>
+                <zone zonename="battle-zone" :model="battlezone"></zone>
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: flex-end;">
+                <zone zonename="battle-zone" :model="battlezone" :dragged="dragged"></zone>
+                <zone zonename="shield-zone" :model="shieldzone" :dragged="dragged"></zone>
+                <zone zonename="mana-zone" :model="manazone" :dragged="dragged"></zone>
+                <div style="display: flex;">
+                    <zone zonename="graveyard-zone" :pile="true" :model="gravezone" :dragged="dragged"></zone>
+                    <zone zonename="hand-zone" style="flex: 1;" :model="handzone" :dragged="dragged"></zone>
+                    <zone zonename="deck-zone" :pile="true" :model="deckzone" :dragged="dragged"></zone>
+                </div>
+            </div>
+        </div>
+    </script>
+
     <!--
         TAGS
     -->
+
     <script type='text/x-template' id='tags'>
         <div class="column-container">
             <b-input-group v-for="(row, index) in rows" style="user-select: none;">
-                <b-form-tags input-id="tags-pills" v-model="modelvar.data.rows[index]" tag-variant="secondary" tag-pills size="sm" remove-on-delete :placeholder="(row && row.length > 0 ) ? '' : 'Name, race, effect...'"/> 
+                <b-form-tags input-id="tags-pills" v-model="modelvar.data.rows[index]" tag-variant="secondary" tag-pills size="sm" remove-on-delete :placeholder="(row && row.length > 0 ) ? '' : 'Name, race, effect...'"/>
                 <b-input-group-append>
                     <b-button @click="addrow(index)" size="sm" :variant="(((index + 1) == rows.length)) ? 'secondary' : 'danger'">{{ (((index + 1) == rows.length)) ? '+' : 'X' }}</b-button>
                 </b-input-group-append>
@@ -94,9 +143,9 @@
             <div id="queries">
 
                 <div id="searchtype">
-                        <b-form-radio-group v-model="searchtypemodel" :options="[{text: 'CARD VIEW', value: 'tcg'}, {text: 'DECK VIEW', value: 'deck'}]" buttons size="sm"></b-form-radio-group>
+                        <b-form-radio-group v-model="searchtypemodel" :options="[{text: 'CARD VIEW', value: 'tcg'}, {text: 'DECK VIEW', value: 'deck'}, {text: 'test', value: 'test'}]" buttons size="sm"></b-form-radio-group>
                 </div>
-                
+
                 <div id="taggroup" class="query">
                     <tags :modelvar="models.tags"></tags>
                 </div>
@@ -112,7 +161,7 @@
 
                 <div class="query">
                     <slider class="sliderman" :modelvar="models.cost" title="COST" :points="cost_points"></slider>
-                
+
                     <slider class="sliderman" :modelvar="models.power" title="POWER" :points="power_points"></slider>
 
                     <slider class="sliderman" :modelvar="models.set" title="SET" :points="set_points"></slider>
@@ -151,7 +200,7 @@
                     </div>
                 </div>
                 <div id="decktextcontainer">
-                    <textarea id="decktext" @input="calculate_and_send_change($event)" spellcheck="false" :style="decktext_style" v-model="active_deck.text"></textarea>
+                    <textarea id="decktext" spellcheck="false" :style="decktext_style" v-model="active_deck.text"></textarea>
                     <div id="deckoverlay-container-wrapper" :style="decktext_style">
                         <div id="deckoverlay-container" :style="'height: ' + el_property('decktext', 'height') + ';'">
                             <div v-for="[count, card] in deck_lines" class="deckoverlay">
@@ -174,15 +223,15 @@
             </div>
 
         </div>
-        
+
         <div id="cards">
-            <div id="cards-centered" :style="'width: ' + (cards_per_row * 224 + 2).toString() + 'px;'">
-                <div id="cards-queried" v-show="!show_deck">
+            <div v-show="searchtypemodel === 'tcg' || searchtypemodel === 'deck'" id="cards-centered" :style="'width: ' + (cards_per_row * 224 + 2).toString() + 'px;'">
+                <div id="cards-queried" v-show="searchtypemodel === 'tcg'">
                     <div class="card-container" v-for="(card, index) in cards" :key="card" :id="'card' + index.toString()" v-show="show[card]" :card="card" v-on:click="add_card(card)" @contextmenu="$event.preventDefault(); remove_card(card)">
                     </div>
                 </div>
-                <div id="decks-tabs" v-show="show_deck">
-                    <input type="file" id="invisiblefileinput" accept=".json" style="display: none;" @change="load_storage()">          
+                <div id="decks-tabs" v-show="searchtypemodel === 'deck'">
+                    <input type="file" id="invisiblefileinput" accept=".json" style="display: none;" @change="load_storage()">
                     <div id="cards-deck">
                         <div class="card-container" v-for="card in deck_cards" :key="card" :style="'width: 222px; height: ' + (307 + 20 * (Math.min(deck_cards_to_count[card], 4) - 1)) + 'px'" v-on:click="add_card(card)" @contextmenu="$event.preventDefault(); remove_card(card)">
                             <img v-show="show[card]" class="card-image" v-for="i in [...Array(Math.min(deck_cards_to_count[card], 4)).keys()]" :style="'position: absolute; top: ' + (20 * i) + 'px; z-index: ' + i" class="card-image" :alt="card" :src="card_image(card)">
@@ -191,12 +240,13 @@
                     </div>
                 </div>
             </div>
+            <div id="client-tab" style="flex: 1;" v-show="searchtypemodel === 'test'">
+                    <game></game>
+            </div>
         </div>
         <div id="decklist">
             <div id="deckname-editor" style="display: flex;">
                 <b-dropdown right size="sm" style="width: 10%;">
-                    <b-dropdown-item @click="host_active_deck()">Host collaborative deck</b-dropdown-item>
-                    <b-dropdown-item @click="join_active_deck()">Join collaborative deck</b-dropdown-item>
                     <b-dropdown-item :disabled.sync="storage.decks.length === 1" @click="delete_active_deck()">Delete deck</b-dropdown-item>
                     <b-dropdown-divider></b-dropdown-divider>
                     <b-dropdown-item :disabled.sync="!localStorage.agree" @click="download_local_storage()">Download decks to file</b-dropdown-item>
@@ -211,7 +261,7 @@
                         <template v-slot:title>
                             <strong><font color="#6c757d">DECKS</font></strong>
                         </template>
-                        <draggable v-model="storage.decks" @end="deck_moved" style="display: flex; flex-direction: column;">
+                        <draggable v-model="storage.decks" style="display: flex; flex-direction: column;">
                             <div v-for="(deck, index) in storage.decks" v-show="deck.name.toLowerCase().includes(decks_filter.toLowerCase())" @click="storage.deck_index = index;" class="decktitle" :style="((storage.deck_index === index) ? 'border: 6px solid; height: 46px;' : 'margin: 6px; margin-top: 3px; margin-bottom: 3px; height: 40px; ') + 'border-color: #6c757d; display: flex; justify-content: center; background-image: linear-gradient(' + Math.round(90 * spells_counts[index] + 90).toString() + 'deg, ' + gradient_from_civs(decks_civ_counts[index]) + ')'">
                                 <b-badge v-show="deck.name" pill variant="light" style="user-select: none; margin: auto; filter: brightness(100%);"><font color="#6c757d"><strong>{{ deck.name }}</strong></font></b-badge>
                             </div>
@@ -225,6 +275,7 @@
                     </b-tab>
                 </b-tabs>
             </div>
+
             <b-form-input squared v-model="decks_filter" placeholder="Filter decks..."></b-form-input>
             <b-button squared style="border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;" @click="new_deck()">CREATE NEW DECK</b-button>
         </div>
@@ -240,10 +291,11 @@
             <b-button pill variant="secondary" style="margin-left: 5px;" size="sm" @click="rodo_show = false;">Dismiss</b-button>
         </b-alert>
     </div>
+    <img id="dragimg" style="pointer-events: none; position: absolute; left: 0px; top: 0px; background: red; z-index: -1;">
     <img class="popup" style="display: none; pointer-events: none; position: absolute; z-index: 10000; width: 222px; height: 307px; border-radius: 10px;" id="preview-image">
 </div>
 
-    <script src="/client/index.js"></script>
+    <script src="index.js"></script>
 
 </body>
 </html>
