@@ -567,7 +567,7 @@ Vue.component('card', {
     props: ['cardname', 'dndindex', 'divclass'],
     data() {
         return{
-            image: (window.location.href.includes('beta') ? '../' : './') + 'dm_images/' + (this.alwaysback ? 'card_back' : this.cardname.name) + '.jpg',
+            image: '/dm_images/' + (this.alwaysback ? 'card_back' : this.cardname.name) + '.jpg',
         }
     },
 
@@ -586,7 +586,7 @@ Vue.component('card', {
         change_cover(){
             let refs = this.$refs.card_element;
             if(refs.getAttribute("cover") == "false"){
-                refs.setAttribute("src", (window.location.href.includes('beta') ? '../' : './') + "dm_images/card_back.jpg");
+                refs.setAttribute("src", "/dm_images/card_back.jpg");
                 refs.setAttribute("cover", "true")
             } else {
                 refs.src = this.image;
@@ -855,11 +855,11 @@ var app = new Vue({
             img: ""
         },
         dragged: {},
-        shieldtrigger_icon: (window.location.href.includes('beta') ? '../' : './') + '/icons/shieldtrigger.png',
-        blocker_icon: (window.location.href.includes('beta') ? '../' : './') + '/icons/blocker.png',
-        evolutioncreature_icon: (window.location.href.includes('beta') ? '../' : './') + '/icons/evolutioncreature.png',
-        wavestriker_icon: (window.location.href.includes('beta') ? '../' : './') + '/icons/wavestriker.png',
-        survivor_icon: (window.location.href.includes('beta') ? '../' : './') + '/icons/survivor.png',
+        shieldtrigger_icon: '/icons/shieldtrigger.png',
+        blocker_icon: '/icons/blocker.png',
+        evolutioncreature_icon: '/icons/evolutioncreature.png',
+        wavestriker_icon: '/icons/wavestriker.png',
+        survivor_icon: '/icons/survivor.png',
 
         // counters
         is: {
@@ -1014,7 +1014,7 @@ var app = new Vue({
                 preview_img.style.left = (x + 5).toString() + 'px';
                 preview_img.style.top = (y + 5 - 307).toString() + 'px';
                 let card = this.deck_lines[index][1].toLowerCase();
-                preview_img.src = (card in tcg) ? this.card_image(card) : ((window.location.href.includes('beta') ? '../' : './') + 'icons/notfound.jpg');
+                preview_img.src = (card in tcg) ? this.card_image(card) : '/icons/notfound.jpg';
             }
             else {
                 preview_img.style.display = 'none';
@@ -1032,7 +1032,7 @@ var app = new Vue({
             return Object.entries(this.deck_cards_to_count).reduce((sum, [name, count]) => sum + (is_evo_bait(tcg[name]) ? count : 0), 0);
         },
         card_image(card) {
-            return (window.location.href.includes('beta') ? '../' : './') + 'dm_images/' + card + '.jpg';
+            return '/dm_images/' + card + '.jpg';
         },
         el_property(id, prop) {
             const el = document.getElementById(id);
